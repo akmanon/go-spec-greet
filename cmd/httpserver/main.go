@@ -8,8 +8,11 @@ import (
 )
 
 func main() {
-	handler := http.HandlerFunc(go_spec_greet.Handler)
-	if err := http.ListenAndServe(":8080", handler); err != nil {
+	handlerGreet := http.HandlerFunc(go_spec_greet.GreetHandler)
+	handlerCurse := http.HandlerFunc(go_spec_greet.CurseHandler)
+	http.HandleFunc("/greet", handlerGreet)
+	http.HandleFunc("/curse", handlerCurse)
+	if err := http.ListenAndServe(":8080", nil); err != nil {
 		log.Fatal(err)
 	}
 }

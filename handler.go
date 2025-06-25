@@ -5,6 +5,12 @@ import (
 	"net/http"
 )
 
-func Handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "Hello World")
+func GreetHandler(w http.ResponseWriter, r *http.Request) {
+	name := r.URL.Query().Get("name")
+	fmt.Fprint(w, Greet(name))
+}
+
+func CurseHandler(w http.ResponseWriter, r *http.Request) {
+	name := r.URL.Query().Get("name")
+	fmt.Fprint(w, Curse(name))
 }

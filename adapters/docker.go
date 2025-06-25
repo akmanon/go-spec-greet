@@ -1,29 +1,32 @@
-package main_test
+package adapters
 
 import (
 	"context"
-	"net/http"
+	"fmt"
 	"testing"
 	"time"
 
-	go_specs_greet "github.com/akmanon/go-spec-greet"
-	"github.com/akmanon/go-spec-greet/specifications"
 	"github.com/alecthomas/assert"
+	"github.com/docker/go-connections/nat"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
-func TestGreeterServer(t *testing.T) {
+func StartDockerServer(
+	t testing.TB,
+	port string,
+	dockerFilePath string,
+) {
 	ctx := context.Background()
 
 	req := testcontainers.ContainerRequest{
 		FromDockerfile: testcontainers.FromDockerfile{
 			Context:       "../../.",
-			Dockerfile:    "./cmd/httpserver/Dockerfile",
+			Dockerfile:    dockerFilePath,
 			PrintBuildLog: true,
 		},
-		ExposedPorts: []string{"8080:8080"},
-		WaitingFor:   wait.ForHTTP("/").WithPort("8080"),
+		ExposedPorts: []string{fmt.Sprintf("%s:%s", port, port)},
+		WaitingFor:   wait.ForListeningPort(nat.Port(port)).WithStartupTimeout(5 * time.Second),
 	}
 
 	container, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
@@ -32,12 +35,7 @@ func TestGreeterServer(t *testing.T) {
 	})
 	assert.NoError(t, err)
 	t.Cleanup(func() {
-		assert.NoError(t, container.Terminate(ctx))
+		container.Terminate(ctx)
 	})
 
-	client := &http.Client{
-		Timeout: 1 * time.Second,
-	}
-	driver := go_specs_greet.Driver{BaseURL: "http://localhost:8080", Client: client}
-	specifications.GreetSpecification(t, driver)
 }
